@@ -1,4 +1,4 @@
-// "use client";
+"use client";
 
 import { Alert, Grid, Snackbar, Typography } from "@mui/material";
 import { useRecoilState, useSetRecoilState } from "recoil";
@@ -43,7 +43,7 @@ export function Header(): JSX.Element {
   // TODO: loginUserを取得する前であってもエリアは確保しておく＆ボタンは表示しておく
   return (
     <>
-      <Grid container spacing={2} alignItems="center">
+      <Grid container spacing={2} alignItems="center" className="h-16">
         <Grid container item xs={8}></Grid>
         {loginUser.userId && (
           <Grid container item xs={4} alignItems="center">
