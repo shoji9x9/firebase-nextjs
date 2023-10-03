@@ -23,16 +23,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ThemeRegistry options={{ key: "mui" }}>
-          {/* <RecoilRoot>
-            <Box
-              sx={{
-                padding: 4,
-              }}
-            >
-              <Header />
-              {children}
-            </Box>
-          </RecoilRoot> */}
           <RecoilProvider>{children}</RecoilProvider>
         </ThemeRegistry>
       </body>
