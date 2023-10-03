@@ -39,20 +39,12 @@ export function PersonalForm() {
           required
           {...register("email")}
         />
-
-        {/* <DatePicker
-          label="Date of birth"
-          required
-          {...register("dateOfBirth")}
-        /> */}
         <Controller
           name="dateOfBirth"
           control={control}
-          // defaultValue={null}
           render={({ field }) => (
             <DatePicker
               label="Date of birth"
-              // required
               slotProps={{ textField: { required: true } }}
               {...field}
               onChange={(value) => field.onChange(value)}

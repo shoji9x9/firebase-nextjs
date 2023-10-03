@@ -19,6 +19,6 @@ const config: Config = {
   corePlugins: {
     preflight: false,
   },
-  important: "#root",
+  // important: "#root",
 };
 export default config;
