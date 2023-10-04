@@ -50,6 +50,8 @@ export function PersonalForm() {
     }
   };
 
+  console.log("loginUser: ", loginUser);
+
   useEffect(() => {
     const personalInfoPromiss = getPersonalInfo(loginUser);
     personalInfoPromiss
