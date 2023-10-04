@@ -32,9 +32,9 @@ export function PersonalForm() {
     setValue,
   } = useForm<PersonalInfo>();
 
-  const onSubmit: SubmitHandler<PersonalInfo> = (data) => {
+  const onSubmit: SubmitHandler<PersonalInfo> = async (data) => {
     try {
-      savePersonalInfo(data, loginUser);
+      await savePersonalInfo(data, loginUser);
       setMessageAtom((prev) => {
         return {
           ...prev,
