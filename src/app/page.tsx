@@ -1,15 +1,7 @@
 import { SignInButton } from "@/components/SignInButton";
-import { Box, Button, Typography } from "@mui/material";
-// import { setUserToLocalStorage, signInWithGoogle } from "../utils/auth";
-// import { useRecoilState, useSetRecoilState } from "recoil";
-// import { userAtom } from "../states/userAtom";
-// import { useNavigate } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 
 export default function Home(): JSX.Element {
-  // const [loginUser] = useRecoilState(userAtom);
-  // const setUserAtom = useSetRecoilState(userAtom);
-  // const navigate = useNavigate();
-
   return (
     <>
       <Typography variant="h2">Sign in</Typography>

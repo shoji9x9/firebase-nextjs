@@ -1,27 +1,90 @@
 "use client";
 
+import { getPersonalInfo } from "@/services/getPersonalInfo";
+import { savePersonalInfo } from "@/services/savePersonalInfo";
+import { messageAtom } from "@/states/messageAtom";
+import { userAtom } from "@/states/userAtom";
+import { PersonalInfo } from "@/types/types";
+import { exceptionMessage, successMessage } from "@/utils/messages";
 import { Box, Button, Stack, TextField } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
-import { DateField } from "@mui/x-date-pickers/DateField";
+import dayjs from "dayjs";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm, SubmitHandler, Controller } from "react-hook-form";
-
-type PersonalInfo = {
-  fullName: string;
-  email: string;
-  dateOfBirth: string;
-  zipCode: string;
-  address: string;
-};
+import { useRecoilState, useSetRecoilState } from "recoil";
 
 export function PersonalForm() {
+  const [loginUser] = useRecoilState(userAtom);
+  const setMessageAtom = useSetRecoilState(messageAtom);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
     control,
+    setValue,
   } = useForm<PersonalInfo>();
-  const onSubmit: SubmitHandler<PersonalInfo> = (data) => console.log(data);
+
+  const onSubmit: SubmitHandler<PersonalInfo> = (data) => {
+    try {
+      savePersonalInfo(data, loginUser);
+      setMessageAtom((prev) => {
+        return {
+          ...prev,
+          ...successMessage("Saved"),
+        };
+      });
+      router.push("/careers");
+    } catch (error) {
+      setMessageAtom((prev) => {
+        return {
+          ...prev,
+          ...exceptionMessage(),
+        };
+      });
+    }
+  };
+
+  useEffect(() => {
+    const personalInfoPromiss = getPersonalInfo(loginUser);
+    personalInfoPromiss
+      .then((personalInfo) => {
+        setValue<"fullName">(
+          "fullName",
+          personalInfo?.fullName || loginUser.userName || ""
+        );
+        setValue<"email">(
+          "email",
+          personalInfo?.email || loginUser.email || ""
+        );
+        setValue<"dateOfBirth">(
+          "dateOfBirth",
+          dayjs(personalInfo?.dateOfBirth) || ""
+        );
+        setValue<"zipCode">("zipCode", personalInfo?.zipCode || "");
+        setValue<"address">("address", personalInfo?.address || "");
+      })
+      .catch((error) => {
+        setMessageAtom((prev) => {
+          return {
+            ...prev,
+            ...exceptionMessage(),
+          };
+        });
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [loginUser, setValue, setMessageAtom]);
+
+  if (loading) {
+    return <></>;
+  }
 
   return (
     <Box className="w-1/2">
@@ -47,7 +110,9 @@ export function PersonalForm() {
               label="Date of birth"
               slotProps={{ textField: { required: true } }}
               {...field}
-              onChange={(value) => field.onChange(value)}
+              onChange={(value) => {
+                field.onChange(value);
+              }}
             />
           )}
         />
@@ -65,7 +130,9 @@ export function PersonalForm() {
           {...register("address")}
         />
         <Box>
-          <Button variant="outlined">Cancel</Button>
+          <Link href="/careers">
+            <Button variant="outlined">Cancel</Button>
+          </Link>
           <Button
             variant="contained"
             className="ml-2"

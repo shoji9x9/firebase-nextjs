@@ -22,9 +22,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThemeRegistry options={{ key: "mui" }}>
-          <RecoilProvider>{children}</RecoilProvider>
-        </ThemeRegistry>
+        <div id="root">
+          <ThemeRegistry options={{ key: "mui" }}>
+            <RecoilProvider>{children}</RecoilProvider>
+          </ThemeRegistry>
+        </div>
       </body>
     </html>
   );

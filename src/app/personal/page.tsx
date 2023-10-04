@@ -1,8 +1,7 @@
 import { PersonalForm } from "@/components/PersonalForm";
-import { Box, Button, Typography } from "@mui/material";
-import Link from "next/link";
+import { Box, Typography } from "@mui/material";
 
-export default function Personal() {
+export default async function Personal() {
   return (
     <>
       <Typography variant="h2">Personal information</Typography>

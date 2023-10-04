@@ -28,6 +28,7 @@ export function SignInButton() {
           ...prev,
           userId: user?.uid || null,
           userName: user?.displayName || null,
+          email: user?.email || null,
         };
       });
 

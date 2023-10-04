@@ -40,7 +40,6 @@ export function Header(): JSX.Element {
     });
   }, [loginUser.userId, loginUser.userName, setLoginUser]);
 
-  // TODO: loginUserを取得する前であってもエリアは確保しておく＆ボタンは表示しておく
   return (
     <>
       <Grid container spacing={2} alignItems="center" className="h-16">
