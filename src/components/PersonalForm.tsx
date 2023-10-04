@@ -52,8 +52,6 @@ export function PersonalForm() {
     }
   };
 
-  console.log("loginUser: ", loginUser);
-
   useEffect(() => {
     const _loginUser = getLoginUserFromLocalStorage();
     setLoginUser(_loginUser);

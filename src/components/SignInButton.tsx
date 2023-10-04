@@ -23,8 +23,6 @@ export function SignInButton() {
     if (!loginUser.userId) {
       const userCredential = await signInWithGoogle();
 
-      console.log("userCredential: ", userCredential);
-
       const user = userCredential?.user;
 
       setUserAtom((prev) => {
