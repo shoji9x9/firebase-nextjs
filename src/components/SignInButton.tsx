@@ -6,6 +6,7 @@ import GoogleIcon from "@mui/icons-material/Google";
 import { setUserToLocalStorage, signInWithGoogle } from "@/services/auth";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { userAtom } from "@/states/userAtom";
+import { use } from "react";
 
 declare module "@mui/material/Button" {
   interface ButtonPropsColorOverrides {
@@ -21,6 +22,9 @@ export function SignInButton() {
     // サインインしていない場合はサインインする
     if (!loginUser.userId) {
       const userCredential = await signInWithGoogle();
+
+      console.log("userCredential: ", userCredential);
+
       const user = userCredential?.user;
 
       setUserAtom((prev) => {
