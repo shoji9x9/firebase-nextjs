@@ -26,10 +26,10 @@ const database = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // 開発環境ではemulatorに接続
-// const isDevelopment = process.env.NODE_ENV === "development";
-// if (isDevelopment) {
-//   connectAuthEmulator(auth, "http://localhost:9099");
-//   connectFirestoreEmulator(database, "127.0.0.1", 8080);
-// }
+const isDevelopment = process.env.NODE_ENV === "development";
+if (isDevelopment) {
+  connectAuthEmulator(auth, "http://localhost:9099");
+  connectFirestoreEmulator(database, "127.0.0.1", 8080);
+}
 
 export { database, auth, provider };

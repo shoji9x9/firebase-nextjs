@@ -7,7 +7,7 @@ export async function signInWithGoogle() {
     const userCredential = await signInWithPopup(auth, provider);
     return userCredential;
   } catch (e) {
-    console.log(e);
+    console.error(e);
     throw e;
   }
 }
@@ -16,7 +16,7 @@ export async function signOutWithGoogle() {
   try {
     await auth.signOut();
   } catch (e) {
-    console.log(e);
+    console.error(e);
     throw e;
   }
 }

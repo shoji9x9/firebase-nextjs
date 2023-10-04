@@ -34,8 +34,6 @@ export function PersonalForm() {
 
   const onSubmit: SubmitHandler<PersonalInfo> = async (data) => {
     try {
-      console.log("data: ", data);
-      console.log("loginUser: ", loginUser);
       await savePersonalInfo(data, loginUser);
       setMessageAtom((prev) => {
         return {
@@ -43,7 +41,7 @@ export function PersonalForm() {
           ...successMessage("Saved"),
         };
       });
-      // router.push("/careers");
+      router.push("/careers");
     } catch (error) {
       setMessageAtom((prev) => {
         return {
