@@ -6,6 +6,8 @@ import { LoginUser, userAtom } from "../states/userAtom";
 import { messageAtom } from "../states/messageAtom";
 import { SignOutButton } from "@/components/SignOutButton";
 import { useEffect } from "react";
+import { getLoginUserFromLocalStorage } from "@/services/auth";
+import { log } from "console";
 
 export function Header(): JSX.Element {
   const [loginUser] = useRecoilState(userAtom);
@@ -23,22 +25,26 @@ export function Header(): JSX.Element {
   };
 
   useEffect(() => {
-    let _userId = localStorage.getItem("userId");
-    let _userName = localStorage.getItem("userName");
+    let { userId, userName, email } = getLoginUserFromLocalStorage();
+
     if (loginUser.userId) {
-      _userId = loginUser.userId;
+      userId = loginUser.userId;
     }
     if (loginUser.userName) {
-      _userName = loginUser.userName;
+      userName = loginUser.userName;
+    }
+    if (loginUser.email) {
+      email = loginUser.email;
     }
     setLoginUser((prev: LoginUser) => {
       return {
         ...prev,
-        userId: _userId || null,
-        userName: _userName || null,
+        userId: userId || null,
+        userName: userName || null,
+        email: email || null,
       };
     });
-  }, [loginUser.userId, loginUser.userName, setLoginUser]);
+  }, [loginUser.userId, loginUser.userName, loginUser.email, setLoginUser]);
 
   return (
     <>

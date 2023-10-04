@@ -1,9 +1,10 @@
 "use client";
 
+import { getLoginUserFromLocalStorage } from "@/services/auth";
 import { getPersonalInfo } from "@/services/getPersonalInfo";
 import { savePersonalInfo } from "@/services/savePersonalInfo";
 import { messageAtom } from "@/states/messageAtom";
-import { userAtom } from "@/states/userAtom";
+import { LoginUser, userAtom } from "@/states/userAtom";
 import { PersonalInfo } from "@/types/types";
 import { exceptionMessage, successMessage } from "@/utils/messages";
 import { Box, Button, Stack, TextField } from "@mui/material";
@@ -16,7 +17,8 @@ import { useForm, SubmitHandler, Controller } from "react-hook-form";
 import { useRecoilState, useSetRecoilState } from "recoil";
 
 export function PersonalForm() {
-  const [loginUser] = useRecoilState(userAtom);
+  // const [loginUser] = useRecoilState(userAtom);  ビルド時に実行してしまうため利用しない
+  const [loginUser, setLoginUser] = useState<LoginUser>();
   const setMessageAtom = useSetRecoilState(messageAtom);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -53,16 +55,18 @@ export function PersonalForm() {
   console.log("loginUser: ", loginUser);
 
   useEffect(() => {
-    const personalInfoPromiss = getPersonalInfo(loginUser);
+    const _loginUser = getLoginUserFromLocalStorage();
+    setLoginUser(_loginUser);
+    const personalInfoPromiss = getPersonalInfo(_loginUser);
     personalInfoPromiss
       .then((personalInfo) => {
         setValue<"fullName">(
           "fullName",
-          personalInfo?.fullName || loginUser.userName || ""
+          personalInfo?.fullName || _loginUser.userName || ""
         );
         setValue<"email">(
           "email",
-          personalInfo?.email || loginUser.email || ""
+          personalInfo?.email || _loginUser.email || ""
         );
         setValue<"dateOfBirth">(
           "dateOfBirth",
@@ -82,7 +86,7 @@ export function PersonalForm() {
       .finally(() => {
         setLoading(false);
       });
-  }, [loginUser, setValue, setMessageAtom]);
+  }, [setValue, setMessageAtom]);
 
   if (loading) {
     return <></>;
