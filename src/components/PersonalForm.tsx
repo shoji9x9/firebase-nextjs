@@ -5,7 +5,7 @@ import { getPersonalInfo } from "@/services/getPersonalInfo";
 import { savePersonalInfo } from "@/services/savePersonalInfo";
 import { messageAtom } from "@/states/messageAtom";
 import { LoginUser, userAtom } from "@/states/userAtom";
-import { PersonalInfo } from "@/types/types";
+import { PersonalInfo, PersonalInfoSchema } from "@/types/types";
 import { exceptionMessage, successMessage } from "@/utils/messages";
 import { Box, Button, Stack, TextField } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, SubmitHandler, Controller } from "react-hook-form";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export function PersonalForm() {
   // const [loginUser] = useRecoilState(userAtom);  ビルド時に実行してしまうため利用しない
@@ -30,7 +31,16 @@ export function PersonalForm() {
     formState: { errors },
     control,
     setValue,
-  } = useForm<PersonalInfo>();
+  } = useForm<PersonalInfo>({
+    // modeをonSubmitにすることで、Saveボタンを押すまではフォーカスアウトのタイミングではバリデーションは動かないようになる
+    mode: "onSubmit",
+    // reValidateModeをonBlurにすることで、Saveボタンが押された後はフォーカスアウトのタイミングでバリデーションが走る
+    reValidateMode: "onBlur",
+    // デフォルト状態はフォーム要素全てが未定義(undefined)の状態として取り扱う
+    defaultValues: undefined,
+    // zodResolverの引数にvalidation時に実行するschemaを渡す
+    resolver: zodResolver(PersonalInfoSchema),
+  });
 
   const onSubmit: SubmitHandler<PersonalInfo> = async (data) => {
     try {
@@ -98,6 +108,8 @@ export function PersonalForm() {
           label="Full name"
           required
           {...register("fullName")}
+          error={!!errors.fullName}
+          helperText={errors.fullName?.message}
         />
         <TextField
           variant="outlined"
@@ -105,6 +117,8 @@ export function PersonalForm() {
           type="email"
           required
           {...register("email")}
+          error={!!errors.email}
+          helperText={errors.email?.message}
         />
         <Controller
           name="dateOfBirth"
@@ -112,10 +126,20 @@ export function PersonalForm() {
           render={({ field }) => (
             <DatePicker
               label="Date of birth"
-              slotProps={{ textField: { required: true } }}
+              slotProps={{
+                textField: {
+                  required: true,
+                  error: !!errors.dateOfBirth,
+                  helperText: errors.dateOfBirth?.message,
+                  onBlur: field.onBlur,
+                },
+                field: { clearable: true },
+              }}
               {...field}
               onChange={(value) => {
-                field.onChange(value);
+                const _value = value === null ? "" : value;
+                field.onChange(_value);
+                field.onBlur();
               }}
             />
           )}
@@ -123,15 +147,17 @@ export function PersonalForm() {
         <TextField
           variant="outlined"
           label="Zip code"
-          type="number"
           required
           {...register("zipCode")}
+          error={!!errors.zipCode}
+          helperText={errors.zipCode?.message}
         />
         <TextField
           variant="outlined"
           label="Address"
-          required
           {...register("address")}
+          error={!!errors.address}
+          helperText={errors.address?.message}
         />
         <Box>
           <Link href="/careers">
