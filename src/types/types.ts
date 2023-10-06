@@ -7,10 +7,12 @@ export const PersonalInfoSchema = z.object({
     .string()
     .min(1, { message: "mandatory" })
     .email({ message: "should be in the format something@domain.com" }),
-  dateOfBirth: z.union([
-    z.string().min(1, { message: "mandatory" }),
-    z.instanceof(dayjs as unknown as typeof dayjs.Dayjs),
-  ]),
+  dateOfBirth: z.instanceof(dayjs as unknown as typeof dayjs.Dayjs).refine((value) => {
+    console.log("value", value);
+    return value.isValid();
+  }, {message: "invalid date"}).refine((value) => {
+    return !value.isAfter(dayjs());
+  }, {message: "future date"}),
   zipCode: z
     .string()
     .min(1, { message: "mandatory" })

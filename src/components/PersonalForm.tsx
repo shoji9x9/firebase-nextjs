@@ -7,37 +7,75 @@ import { messageAtom } from "@/states/messageAtom";
 import { LoginUser, userAtom } from "@/states/userAtom";
 import { PersonalInfo, PersonalInfoSchema } from "@/types/types";
 import { exceptionMessage, successMessage } from "@/utils/messages";
-import { Box, Button, Stack, TextField } from "@mui/material";
+import {
+  Box,
+  Button,
+  FormControlLabel,
+  Stack,
+  Switch,
+  TextField,
+} from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, SubmitHandler, Controller } from "react-hook-form";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-export function PersonalForm() {
+export function PersonalForm({
+  setDirty,
+}: {
+  setDirty: (dirty: boolean) => void;
+}) {
   // const [loginUser] = useRecoilState(userAtom);  ビルド時に実行してしまうため利用しない
   const [loginUser, setLoginUser] = useState<LoginUser>();
   const setMessageAtom = useSetRecoilState(messageAtom);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [canEdit, setCanEdit] = useState(false);
+
+  const getInitialValue = async () => {
+    let personalInfo: PersonalInfo = {
+      fullName: "",
+      email: "",
+      dateOfBirth: dayjs(),
+      zipCode: "",
+      address: "",
+    };
+    try {
+      const _loginUser = getLoginUserFromLocalStorage();
+      setLoginUser(_loginUser);
+      const _personalInfo = await getPersonalInfo(_loginUser);
+      personalInfo.fullName =
+        _personalInfo?.fullName || _loginUser.userName || "";
+      personalInfo.email = _personalInfo?.email || _loginUser.email || "";
+      personalInfo.dateOfBirth = dayjs(_personalInfo?.dateOfBirth) || dayjs();
+      personalInfo.zipCode = _personalInfo?.zipCode || "";
+      personalInfo.address = _personalInfo?.address || "";
+      setLoading(false);
+    } catch (error) {
+      setMessageAtom((prev) => {
+        return {
+          ...prev,
+          ...exceptionMessage(),
+        };
+      });
+      setLoading(false);
+    }
+    return personalInfo;
+  };
 
   const {
     register,
     handleSubmit,
-    watch,
-    formState: { errors },
+    formState: { errors, isDirty, dirtyFields },
     control,
-    setValue,
   } = useForm<PersonalInfo>({
     // modeをonSubmitにすることで、Saveボタンを押すまではフォーカスアウトのタイミングではバリデーションは動かないようになる
     mode: "onSubmit",
     // reValidateModeをonBlurにすることで、Saveボタンが押された後はフォーカスアウトのタイミングでバリデーションが走る
     reValidateMode: "onBlur",
     // デフォルト状態はフォーム要素全てが未定義(undefined)の状態として取り扱う
-    defaultValues: undefined,
+    defaultValues: getInitialValue,
     // zodResolverの引数にvalidation時に実行するschemaを渡す
     resolver: zodResolver(PersonalInfoSchema),
   });
@@ -51,7 +89,7 @@ export function PersonalForm() {
           ...successMessage("Saved"),
         };
       });
-      router.push("/careers");
+      // TODO: dirtyでないようにする。現状、Saveボタン押下してもdirtyのままになってしまっている
     } catch (error) {
       setMessageAtom((prev) => {
         return {
@@ -62,39 +100,16 @@ export function PersonalForm() {
     }
   };
 
+  const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setCanEdit(event.target.checked);
+  };
+
   useEffect(() => {
-    const _loginUser = getLoginUserFromLocalStorage();
-    setLoginUser(_loginUser);
-    const personalInfoPromiss = getPersonalInfo(_loginUser);
-    personalInfoPromiss
-      .then((personalInfo) => {
-        setValue<"fullName">(
-          "fullName",
-          personalInfo?.fullName || _loginUser.userName || ""
-        );
-        setValue<"email">(
-          "email",
-          personalInfo?.email || _loginUser.email || ""
-        );
-        setValue<"dateOfBirth">(
-          "dateOfBirth",
-          dayjs(personalInfo?.dateOfBirth) || ""
-        );
-        setValue<"zipCode">("zipCode", personalInfo?.zipCode || "");
-        setValue<"address">("address", personalInfo?.address || "");
-      })
-      .catch((error) => {
-        setMessageAtom((prev) => {
-          return {
-            ...prev,
-            ...exceptionMessage(),
-          };
-        });
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [setValue, setMessageAtom]);
+    // 値が変更されていなくてもisDirtyがtrueになってしまうため、dirtyFieldsの中身とあわせて判定する
+    console.log("isDirty", isDirty);
+    console.log("dirtyFields", dirtyFields);
+    setDirty(isDirty && Object.keys(dirtyFields).length > 0);
+  }, [isDirty, Object.keys(dirtyFields), setDirty]);
 
   if (loading) {
     return <></>;
@@ -103,74 +118,97 @@ export function PersonalForm() {
   return (
     <Box className="w-1/2">
       <Stack spacing={2}>
-        <TextField
-          variant="outlined"
-          label="Full name"
-          required
-          {...register("fullName")}
-          error={!!errors.fullName}
-          helperText={errors.fullName?.message}
-        />
-        <TextField
-          variant="outlined"
-          label="Email"
-          type="email"
-          required
-          {...register("email")}
-          error={!!errors.email}
-          helperText={errors.email?.message}
-        />
-        <Controller
-          name="dateOfBirth"
-          control={control}
-          render={({ field }) => (
-            <DatePicker
-              label="Date of birth"
-              slotProps={{
-                textField: {
-                  required: true,
-                  error: !!errors.dateOfBirth,
-                  helperText: errors.dateOfBirth?.message,
-                  onBlur: field.onBlur,
-                },
-                field: { clearable: true },
-              }}
-              {...field}
-              onChange={(value) => {
-                const _value = value === null ? "" : value;
-                field.onChange(_value);
-                field.onBlur();
-              }}
+        <FormControlLabel
+          control={
+            <Switch
+              checked={canEdit}
+              disabled={canEdit}
+              onChange={handleSwitchChange}
+              inputProps={{ "aria-label": "controlled" }}
             />
-          )}
+          }
+          label="Edit"
         />
-        <TextField
-          variant="outlined"
-          label="Zip code"
-          required
-          {...register("zipCode")}
-          error={!!errors.zipCode}
-          helperText={errors.zipCode?.message}
-        />
-        <TextField
-          variant="outlined"
-          label="Address"
-          {...register("address")}
-          error={!!errors.address}
-          helperText={errors.address?.message}
-        />
-        <Box>
-          <Link href="/careers">
-            <Button variant="outlined">Cancel</Button>
-          </Link>
-          <Button
-            variant="contained"
-            className="ml-2"
-            onClick={handleSubmit(onSubmit)}
-          >
-            Save
-          </Button>
-        </Box>
+        <Stack spacing={2}>
+          <TextField
+            variant="outlined"
+            label="Full name"
+            required
+            {...register("fullName")}
+            error={!!errors.fullName}
+            helperText={errors.fullName?.message}
+            disabled={!canEdit}
+          />
+          <TextField
+            variant="outlined"
+            label="Email"
+            type="email"
+            required
+            {...register("email")}
+            error={!!errors.email}
+            helperText={errors.email?.message}
+            disabled={!canEdit}
+          />
+          <Controller
+            name="dateOfBirth"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                {...field}
+                label="Date of birth"
+                slotProps={{
+                  textField: {
+                    required: true,
+                    error: !!errors.dateOfBirth,
+                    helperText: errors.dateOfBirth?.message,
+                  },
+                  field: { clearable: true },
+                }}
+                onChange={(value) => {
+                  const _value = value === null ? "" : value;
+                  field.onChange(_value);
+                  field.onBlur();
+                }}
+                disabled={!canEdit}
+              />
+            )}
+            // disabled={!canEdit}  // この指定をすることでdateOfBirthの値がundefinedになってしまっていた
+          />
+          <TextField
+            variant="outlined"
+            label="Zip code"
+            required
+            {...register("zipCode")}
+            error={!!errors.zipCode}
+            helperText={errors.zipCode?.message}
+            disabled={!canEdit}
+          />
+          <TextField
+            variant="outlined"
+            label="Address"
+            {...register("address")}
+            error={!!errors.address}
+            helperText={errors.address?.message}
+            disabled={!canEdit}
+          />
+          <Box>
+            <Button
+              variant="outlined"
+              disabled={!canEdit}
+              onClick={() => setCanEdit(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              className="ml-2"
+              onClick={handleSubmit(onSubmit)}
+              disabled={!canEdit}
+            >
+              Save
+            </Button>
+          </Box>
+        </Stack>
       </Stack>
     </Box>
   );

@@ -13,7 +13,7 @@ export async function savePersonalInfo(
       const ref = doc(database, "users", loginUser.userId);
       const _personalInfo = {
         ...personalInfo,
-        dateOfBirth: dayjs(personalInfo.dateOfBirth).format(),
+        dateOfBirth: dayjs(personalInfo.dateOfBirth).format("YYYY-MM-DD"),
       };
       await setDoc(ref, _personalInfo);
     } catch (e) {
