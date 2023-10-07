@@ -1,5 +1,6 @@
 "use client";
 
+import { CareerList } from "@/components/CareerList";
 import { PersonalForm } from "@/components/PersonalForm";
 import { SimpleDialog } from "@/components/SimpleDialog";
 import { TabPanel } from "@/components/TabPanel";
@@ -59,7 +60,15 @@ export default function Careers() {
           </Box>
         </TabPanel>
         <TabPanel value={selectedTab} index={1}>
-          Item Two
+          <Typography variant="h3">Careers</Typography>
+          <Box
+            sx={{
+              paddingTop: "40px",
+              paddingBottom: "40px",
+            }}
+          >
+            <CareerList setDirty={setDirty} />
+          </Box>
         </TabPanel>
         <SimpleDialog
           open={confirmDialog.openDialog}
