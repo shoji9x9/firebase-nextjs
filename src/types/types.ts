@@ -100,6 +100,7 @@ export const CareerSchema = z
         (!args.isPresent && args.endYearMonth)
       );
     },
+    // TODO: このメッセージが出力できていないため別途修正
     { message: "Only one for isPresent and endYearMonth can be entered." }
   );
 
