@@ -2,7 +2,7 @@ import { messageAtom } from "@/states/messageAtom";
 import { LoginUser } from "@/states/userAtom";
 import { techStacks } from "@/types/techStacks";
 import { Career, CareerSchema, TechStack } from "@/types/types";
-import { exceptionMessage } from "@/utils/messages";
+import { exceptionMessage, successMessage } from "@/utils/messages";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Box,
@@ -28,15 +28,18 @@ import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { useSetRecoilState } from "recoil";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { saveCareer } from "@/services/saveCareer";
 
-export function CareerForm() {
-  const [loginUser, setLoginUser] = useState<LoginUser>();
+export function CareerForm({
+  career,
+  loginUser,
+}: {
+  career: Career;
+  loginUser?: LoginUser;
+}) {
   const setMessageAtom = useSetRecoilState(messageAtom);
-  const [loading, setLoading] = useState(true);
-  const [canEdit, setCanEdit] = useState(false);
 
-  // TODO: この値は親のListから渡すようにする
-  const getInitialValue = async () => {};
+  console.log("CareerForm: ", career);
 
   const {
     register,
@@ -46,31 +49,28 @@ export function CareerForm() {
     watch,
     setValue,
     getValues,
+    reset,
   } = useForm<Career>({
     // modeをonSubmitにすることで、Saveボタンを押すまではフォーカスアウトのタイミングではバリデーションは動かないようになる
     mode: "onSubmit",
     // reValidateModeをonBlurにすることで、Saveボタンが押された後はフォーカスアウトのタイミングでバリデーションが走る
     reValidateMode: "onBlur",
-    // デフォルト状態はフォーム要素全てが未定義(undefined)の状態として取り扱う
-    // defaultValues: getInitialValue,
-    defaultValues: {
-      isEditing: false,
-      projectName: "",
-      isPresent: false,
-      startYearMonth: undefined,
-      endYearMonth: undefined,
-      techStack: [],
-      summary: "",
-      teamSize: 0,
-    },
+    // careerは非同期に親コンポーネントから渡される
+    defaultValues: career,
     // zodResolverの引数にvalidation時に実行するschemaを渡す
     resolver: zodResolver(CareerSchema),
   });
 
   const onSubmit: SubmitHandler<Career> = async (data) => {
     try {
-      // TODO: 別途実装
-      console.log("onSubmit: ", data);
+      await saveCareer(data, loginUser);
+      setMessageAtom((prev) => {
+        return {
+          ...prev,
+          ...successMessage("Saved"),
+        };
+      });
+      // TODO: dirtyでないようにする。現状、Saveボタン押下してもdirtyのままになってしまっている
     } catch (error) {
       setMessageAtom((prev) => {
         return {
@@ -126,7 +126,7 @@ export function CareerForm() {
   }, [isEditingsWatch]);
 
   return (
-    <Box className="w-1/2">
+    <Box className="w-2/3">
       <Stack spacing={2}>
         <Grid container columnSpacing={2} alignItems="center">
           <Grid item>
@@ -145,6 +145,7 @@ export function CareerForm() {
           <Grid item>
             <IconButton
               aria-label="delete"
+              // TODO: データ登録済の場合のみdisabledを解除する
               disabled={!!watch("isEditing")}
               onClick={handleSubmit(onDelete)}
             >
@@ -167,6 +168,7 @@ export function CareerForm() {
               control={
                 <Switch
                   {...register("isPresent")}
+                  checked={watch("isPresent")}
                   disabled={!watch("isEditing") || !!watch("endYearMonth")}
                   inputProps={{ "aria-label": "controlled" }}
                 />
@@ -188,6 +190,8 @@ export function CareerForm() {
                       error: !!errors.startYearMonth,
                       helperText: errors.startYearMonth?.message as ReactNode,
                     },
+                    // TODO: クリアー時にvalueがMMMM YYYYとなって気持ち悪いのでonClear()の実装を検討
+                    // https://mui.com/x/react-date-pickers/date-picker/#clearing-the-value
                     field: { clearable: true },
                   }}
                   onChange={(value) => {

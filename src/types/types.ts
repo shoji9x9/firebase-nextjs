@@ -90,7 +90,10 @@ export const CareerSchema = z
     isPresent: z.boolean(),
     techStack: z.array(z.string()),
     summary: z.string().optional(),
-    teamSize: z.number().optional(),
+    teamSize: z.preprocess(
+      (value) => Number(value),
+      z.number().int().positive().optional()
+    ),
     isEditing: z.boolean(),
   })
   .refine(
@@ -104,7 +107,6 @@ export const CareerSchema = z
     { message: "Only one for isPresent and endYearMonth can be entered." }
   );
 
-// export type Career = Omit<z.infer<typeof CareerSchema>, "isEditing">;
-export type Career = z.infer<typeof CareerSchema>;
+export type Career = z.infer<typeof CareerSchema> & { id?: string };
 
 export type TechStack = (typeof techStacks)[number];

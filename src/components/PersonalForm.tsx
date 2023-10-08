@@ -106,8 +106,6 @@ export function PersonalForm({
 
   useEffect(() => {
     // 値が変更されていなくてもisDirtyがtrueになってしまうため、dirtyFieldsの中身とあわせて判定する
-    console.log("isDirty", isDirty);
-    console.log("dirtyFields", dirtyFields);
     setDirty(isDirty && Object.keys(dirtyFields).length > 0);
   }, [isDirty, Object.keys(dirtyFields), setDirty]);
 

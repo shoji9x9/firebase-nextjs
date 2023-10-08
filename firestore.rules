@@ -18,5 +18,9 @@ service cloud.firestore {
       allow read, update, delete: if isUserAuthenticated(userId);
       allow create: if isAuthenticated();
     }
+    match /users/{userId}/career/{careerId} {
+      allow read, update, delete: if isUserAuthenticated(userId);
+      allow create: if isAuthenticated();
+    }
   }
 }
