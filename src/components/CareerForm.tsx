@@ -120,10 +120,23 @@ export function CareerForm({
     };
   }
 
-  const isEditingsWatch = watch("isEditing");
+  const startYearMonthsWatch = watch("startYearMonth");
   useEffect(() => {
-    console.log(isEditingsWatch);
-  }, [isEditingsWatch]);
+    console.log("startYearMonthsWatch: ", startYearMonthsWatch);
+    // React Hook Formを再描画させるために、nullをセットしている
+    if (startYearMonthsWatch === null) {
+      setValue("startYearMonth", null);
+    }
+  }, [startYearMonthsWatch]);
+
+  const endYearMonthsWatch = watch("endYearMonth");
+  useEffect(() => {
+    console.log("endYearMonthsWatch: ", endYearMonthsWatch);
+    // React Hook Formを再描画させるために、nullをセットしている
+    if (endYearMonthsWatch === null) {
+      setValue("endYearMonth", null);
+    }
+  }, [endYearMonthsWatch]);
 
   return (
     <Box className="w-2/3">
@@ -163,7 +176,7 @@ export function CareerForm({
           disabled={!watch("isEditing")}
         />
         <Grid container columnSpacing={2} alignItems="center">
-          <Grid item xs={3.5} sx={{ paddingLeft: "0 !important" }}>
+          <Grid item xs={4} sx={{ paddingLeft: "0 !important" }}>
             <FormControlLabel
               control={
                 <Switch
@@ -190,13 +203,12 @@ export function CareerForm({
                       error: !!errors.startYearMonth,
                       helperText: errors.startYearMonth?.message as ReactNode,
                     },
-                    // TODO: クリアー時にvalueがMMMM YYYYとなって気持ち悪いのでonClear()の実装を検討
-                    // https://mui.com/x/react-date-pickers/date-picker/#clearing-the-value
-                    field: { clearable: true },
+                    field: {
+                      clearable: true,
+                    },
                   }}
                   onChange={(value) => {
-                    const _value = value === null ? "" : value;
-                    field.onChange(_value);
+                    field.onChange(value);
                     field.onBlur();
                   }}
                   views={["month", "year"]}
@@ -222,8 +234,7 @@ export function CareerForm({
                     field: { clearable: true },
                   }}
                   onChange={(value) => {
-                    const _value = value === null ? "" : value;
-                    field.onChange(_value);
+                    field.onChange(value);
                     field.onBlur();
                   }}
                   views={["month", "year"]}

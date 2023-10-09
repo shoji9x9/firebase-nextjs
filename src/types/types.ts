@@ -51,7 +51,7 @@ export const CareerSchema = z
   .object({
     projectName: z.string().min(1, { message: "mandatory" }),
     startYearMonth: z.union([
-      z.undefined().refine(
+      z.null().refine(
         (value) => {
           return false;
         },
@@ -71,22 +71,23 @@ export const CareerSchema = z
       ),
     ]),
     // endYearMonth: z.string().optional(),
-    endYearMonth: z.optional(
-      z.union([
-        z.string().refine(
-          (value) => {
-            return dayjs(value).isValid();
-          },
-          { message: "invalid date" }
-        ),
-        z.instanceof(dayjs as unknown as typeof dayjs.Dayjs).refine(
-          (value) => {
-            return value.isValid();
-          },
-          { message: "invalid date" }
-        ),
-      ])
-    ),
+    // endYearMonth: z.optional(
+    endYearMonth: z.union([
+      z.null(),
+      z.string().refine(
+        (value) => {
+          return dayjs(value).isValid();
+        },
+        { message: "invalid date" }
+      ),
+      z.instanceof(dayjs as unknown as typeof dayjs.Dayjs).refine(
+        (value) => {
+          return value.isValid();
+        },
+        { message: "invalid date" }
+      ),
+    ]),
+    // ),
     isPresent: z.boolean(),
     techStack: z.array(z.string()),
     summary: z.string().optional(),
