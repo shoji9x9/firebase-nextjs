@@ -15,3 +15,11 @@ export function successMessage(text: string): Message {
     severity: "success",
   };
 }
+
+export function infoMessage(text: string): Message {
+  return {
+    text: text,
+    open: true,
+    severity: "info",
+  };
+}

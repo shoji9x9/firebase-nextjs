@@ -15,6 +15,7 @@ export async function getCareers(
       results.forEach((result) => {
         const _data: Omit<Career, "isEditing"> = {
           ...(result.data() as Omit<Career, "isEditing">),
+          id: result.id,
           startYearMonth: dayjs(result.data().startYearMonth),
           endYearMonth: result.data().endYearMonth
             ? dayjs(result.data().endYearMonth)

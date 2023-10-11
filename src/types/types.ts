@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { ZodType, z } from "zod";
+import { z } from "zod";
 import { techStacks } from "./techStacks";
 
 export const PersonalInfoSchema = z.object({
@@ -49,6 +49,7 @@ export type PersonalInfo = z.infer<typeof PersonalInfoSchema>;
 
 export const CareerSchema = z
   .object({
+    id: z.string().optional(),
     projectName: z.string().min(1, { message: "mandatory" }),
     startYearMonth: z.union([
       z.null().refine(
@@ -70,8 +71,6 @@ export const CareerSchema = z
         { message: "invalid date" }
       ),
     ]),
-    // endYearMonth: z.string().optional(),
-    // endYearMonth: z.optional(
     endYearMonth: z.union([
       z.null(),
       z.string().refine(
@@ -87,14 +86,13 @@ export const CareerSchema = z
         { message: "invalid date" }
       ),
     ]),
-    // ),
     isPresent: z.boolean(),
     techStack: z.array(z.string()),
     summary: z.string().optional(),
-    teamSize: z.preprocess(
-      (value) => Number(value),
-      z.number().int().positive().optional()
-    ),
+    teamSize: z.union([
+      z.null(),
+      z.preprocess((value) => Number(value), z.number().int().positive()),
+    ]),
     isEditing: z.boolean(),
   })
   .refine(
@@ -104,10 +102,18 @@ export const CareerSchema = z
         (!args.isPresent && args.endYearMonth)
       );
     },
-    // TODO: このメッセージが出力できていないため別途修正
-    { message: "Only one for isPresent and endYearMonth can be entered." }
+    {
+      path: ["endYearMonth"],
+      message: "Only one for isPresent and endYearMonth can be entered.",
+    }
   );
 
-export type Career = z.infer<typeof CareerSchema> & { id?: string };
+export const CareerFieldArraySchema = z.object({
+  fieldArray: CareerSchema.array(),
+});
+
+export type Career = z.infer<typeof CareerSchema>;
+
+export type CareerFieldArray = z.infer<typeof CareerFieldArraySchema>;
 
 export type TechStack = (typeof techStacks)[number];

@@ -1,7 +1,7 @@
 import { collection, addDoc, doc, setDoc } from "firebase/firestore";
 import { database } from "../infrastructure/firebase";
 import { LoginUser } from "../states/userAtom";
-import { Career, PersonalInfo } from "../types/types";
+import { Career } from "../types/types";
 import dayjs from "dayjs";
 
 export async function saveCareer(career: Career, loginUser?: LoginUser) {

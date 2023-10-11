@@ -1,9 +1,12 @@
 import { messageAtom } from "@/states/messageAtom";
 import { LoginUser } from "@/states/userAtom";
 import { techStacks } from "@/types/techStacks";
-import { Career, CareerSchema, TechStack } from "@/types/types";
-import { exceptionMessage, successMessage } from "@/utils/messages";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Career, CareerFieldArray, TechStack } from "@/types/types";
+import {
+  exceptionMessage,
+  infoMessage,
+  successMessage,
+} from "@/utils/messages";
 import {
   Box,
   Button,
@@ -23,47 +26,54 @@ import {
   useTheme,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
-import { ReactNode, useEffect, useState } from "react";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { ReactNode, useEffect } from "react";
+import {
+  Control,
+  Controller,
+  FieldErrors,
+  SubmitHandler,
+  UseFormHandleSubmit,
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
+} from "react-hook-form";
 import { useSetRecoilState } from "recoil";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { saveCareer } from "@/services/saveCareer";
+import { deleteCareer } from "@/services/deleteCareer";
 
 export function CareerForm({
   career,
+  register,
+  handleSubmit,
+  errors,
+  control,
+  watch,
+  setValue,
+  index,
   loginUser,
+  deleteForm,
 }: {
   career: Career;
+  register: UseFormRegister<CareerFieldArray>;
+  handleSubmit: UseFormHandleSubmit<CareerFieldArray, undefined>;
+  errors: FieldErrors<CareerFieldArray>;
+  control: Control<CareerFieldArray, any>;
+  watch: UseFormWatch<CareerFieldArray>;
+  setValue: UseFormSetValue<CareerFieldArray>;
+  index: number;
   loginUser?: LoginUser;
+  deleteForm: (idx: number) => void;
 }) {
   const setMessageAtom = useSetRecoilState(messageAtom);
 
   console.log("CareerForm: ", career);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isDirty, dirtyFields },
-    control,
-    watch,
-    setValue,
-    getValues,
-    reset,
-  } = useForm<Career>({
-    // modeをonSubmitにすることで、Saveボタンを押すまではフォーカスアウトのタイミングではバリデーションは動かないようになる
-    mode: "onSubmit",
-    // reValidateModeをonBlurにすることで、Saveボタンが押された後はフォーカスアウトのタイミングでバリデーションが走る
-    reValidateMode: "onBlur",
-    // careerは非同期に親コンポーネントから渡される
-    defaultValues: career,
-    // zodResolverの引数にvalidation時に実行するschemaを渡す
-    resolver: zodResolver(CareerSchema),
-  });
-
-  const onSubmit: SubmitHandler<Career> = async (data) => {
+  const onSubmit: SubmitHandler<CareerFieldArray> = async (data) => {
     try {
-      await saveCareer(data, loginUser);
+      const _data = data.fieldArray[index];
+      await saveCareer(_data, loginUser);
       setMessageAtom((prev) => {
         return {
           ...prev,
@@ -81,10 +91,26 @@ export function CareerForm({
     }
   };
 
-  const onDelete: SubmitHandler<Career> = async (data) => {
+  const onDelete: SubmitHandler<CareerFieldArray> = async (data) => {
     try {
-      // TODO: 別途実装
-      console.log("onDelete: ", data);
+      const _data = data.fieldArray[index];
+      if (_data.id) {
+        await deleteCareer(_data.id, loginUser);
+        deleteForm(index);
+        setMessageAtom((prev) => {
+          return {
+            ...prev,
+            ...successMessage("Deleted"),
+          };
+        });
+      } else {
+        setMessageAtom((prev) => {
+          return {
+            ...prev,
+            ...infoMessage("Not saved yet"),
+          };
+        });
+      }
     } catch (error) {
       setMessageAtom((prev) => {
         return {
@@ -120,37 +146,35 @@ export function CareerForm({
     };
   }
 
-  const startYearMonthsWatch = watch("startYearMonth");
+  const startYearMonthsWatch = watch(`fieldArray.${index}.startYearMonth`);
   useEffect(() => {
-    console.log("startYearMonthsWatch: ", startYearMonthsWatch);
     // React Hook Formを再描画させるために、nullをセットしている
     if (startYearMonthsWatch === null) {
-      setValue("startYearMonth", null);
+      setValue(`fieldArray.${index}.startYearMonth`, null);
     }
   }, [startYearMonthsWatch]);
 
-  const endYearMonthsWatch = watch("endYearMonth");
+  const endYearMonthsWatch = watch(`fieldArray.${index}.endYearMonth`);
   useEffect(() => {
-    console.log("endYearMonthsWatch: ", endYearMonthsWatch);
     // React Hook Formを再描画させるために、nullをセットしている
     if (endYearMonthsWatch === null) {
-      setValue("endYearMonth", null);
+      setValue(`fieldArray.${index}.endYearMonth`, null);
     }
   }, [endYearMonthsWatch]);
 
   return (
-    <Box className="w-2/3">
+    <Box>
       <Stack spacing={2}>
         <Grid container columnSpacing={2} alignItems="center">
           <Grid item>
             <IconButton
               aria-label="edit"
-              name={register("isEditing").name}
-              ref={register("isEditing").ref}
+              name={register(`fieldArray.${index}.isEditing`).name}
+              ref={register(`fieldArray.${index}.isEditing`).ref}
               onClick={() => {
-                setValue("isEditing", true);
+                setValue(`fieldArray.${index}.isEditing`, true);
               }}
-              disabled={!!watch("isEditing")}
+              disabled={!!watch(`fieldArray.${index}.isEditing`)}
             >
               <ModeEditIcon />
             </IconButton>
@@ -159,7 +183,7 @@ export function CareerForm({
             <IconButton
               aria-label="delete"
               // TODO: データ登録済の場合のみdisabledを解除する
-              disabled={!!watch("isEditing")}
+              disabled={!!watch(`fieldArray.${index}.isEditing`)}
               onClick={handleSubmit(onDelete)}
             >
               <DeleteIcon />
@@ -170,19 +194,32 @@ export function CareerForm({
           variant="outlined"
           label="Project name"
           required
-          {...register("projectName")}
-          error={!!errors.projectName}
-          helperText={errors.projectName?.message as ReactNode}
-          disabled={!watch("isEditing")}
+          {...register(`fieldArray.${index}.projectName`)}
+          error={!!errors.fieldArray?.[index]?.projectName}
+          helperText={
+            errors.fieldArray?.[index]?.projectName?.message as ReactNode
+          }
+          disabled={!watch(`fieldArray.${index}.isEditing`)}
         />
         <Grid container columnSpacing={2} alignItems="center">
           <Grid item xs={4} sx={{ paddingLeft: "0 !important" }}>
             <FormControlLabel
               control={
                 <Switch
-                  {...register("isPresent")}
-                  checked={watch("isPresent")}
-                  disabled={!watch("isEditing") || !!watch("endYearMonth")}
+                  // refを利用すると表示時の値がundefinedになったため利用しない
+                  // {...register(`fieldArray.${index}.isPresent`)}
+                  name={register(`fieldArray.${index}.isPresent`).name}
+                  onChange={(e) => {
+                    // 以下を利用するとスイッチを一度操作するときは問題ないが、二度目以降の操作で値が変更されないため利用しない
+                    // register(`fieldArray.${index}.isPresent`).onChange(e);
+                    setValue(`fieldArray.${index}.isPresent`, e.target.checked);
+                  }}
+                  onBlur={register(`fieldArray.${index}.isPresent`).onBlur}
+                  checked={watch(`fieldArray.${index}.isPresent`) || false}
+                  disabled={
+                    !watch(`fieldArray.${index}.isEditing`) ||
+                    !!watch(`fieldArray.${index}.endYearMonth`)
+                  }
                   inputProps={{ "aria-label": "controlled" }}
                 />
               }
@@ -191,7 +228,7 @@ export function CareerForm({
           </Grid>
           <Grid item xs={4}>
             <Controller
-              name="startYearMonth"
+              name={`fieldArray.${index}.startYearMonth`}
               control={control}
               render={({ field }) => (
                 <DatePicker
@@ -200,8 +237,9 @@ export function CareerForm({
                   slotProps={{
                     textField: {
                       required: true,
-                      error: !!errors.startYearMonth,
-                      helperText: errors.startYearMonth?.message as ReactNode,
+                      error: !!errors.fieldArray?.[index]?.startYearMonth,
+                      helperText: errors.fieldArray?.[index]?.startYearMonth
+                        ?.message as ReactNode,
                     },
                     field: {
                       clearable: true,
@@ -212,7 +250,7 @@ export function CareerForm({
                     field.onBlur();
                   }}
                   views={["month", "year"]}
-                  disabled={!watch("isEditing")}
+                  disabled={!watch(`fieldArray.${index}.isEditing`)}
                 />
               )}
             />
@@ -220,7 +258,7 @@ export function CareerForm({
 
           <Grid item xs={4}>
             <Controller
-              name="endYearMonth"
+              name={`fieldArray.${index}.endYearMonth`}
               control={control}
               render={({ field }) => (
                 <DatePicker
@@ -228,8 +266,9 @@ export function CareerForm({
                   label="End date"
                   slotProps={{
                     textField: {
-                      error: !!errors.endYearMonth,
-                      helperText: errors.endYearMonth?.message as ReactNode,
+                      error: !!errors.fieldArray?.[index]?.endYearMonth,
+                      helperText: errors.fieldArray?.[index]?.endYearMonth
+                        ?.message as ReactNode,
                     },
                     field: { clearable: true },
                   }}
@@ -238,7 +277,10 @@ export function CareerForm({
                     field.onBlur();
                   }}
                   views={["month", "year"]}
-                  disabled={!watch("isEditing") || watch("isPresent")}
+                  disabled={
+                    !watch(`fieldArray.${index}.isEditing`) ||
+                    watch(`fieldArray.${index}.isPresent`)
+                  }
                 />
               )}
             />
@@ -247,8 +289,8 @@ export function CareerForm({
         <FormControl>
           <InputLabel id="tech-stack-label">Tech stack</InputLabel>
           <Select
-            {...register("techStack")}
-            value={watch("techStack") || []}
+            {...register(`fieldArray.${index}.techStack`)}
+            value={watch(`fieldArray.${index}.techStack`) || []}
             labelId="tech-stack-label"
             multiple
             input={
@@ -262,13 +304,17 @@ export function CareerForm({
               </Box>
             )}
             MenuProps={MenuProps}
-            disabled={!watch("isEditing")}
+            disabled={!watch(`fieldArray.${index}.isEditing`)}
           >
             {techStacks.map((name) => (
               <MenuItem
                 key={name}
                 value={name}
-                style={getStyles(name, watch("techStack") || [], theme)}
+                style={getStyles(
+                  name,
+                  watch(`fieldArray.${index}.techStack`) || [],
+                  theme
+                )}
               >
                 {name}
               </MenuItem>
@@ -278,27 +324,29 @@ export function CareerForm({
         <TextField
           variant="outlined"
           label="Summary"
-          {...register("summary")}
-          error={!!errors.summary}
-          helperText={errors.summary?.message as ReactNode}
+          {...register(`fieldArray.${index}.summary`)}
+          error={!!errors.fieldArray?.[index]?.summary}
+          helperText={errors.fieldArray?.[index]?.summary?.message as ReactNode}
           multiline
           rows={5}
-          disabled={!watch("isEditing")}
+          disabled={!watch(`fieldArray.${index}.isEditing`)}
         />
         <TextField
           type="number"
           variant="outlined"
           label="Team size"
-          {...register("teamSize")}
-          error={!!errors.teamSize}
-          helperText={errors.teamSize?.message as ReactNode}
-          disabled={!watch("isEditing")}
+          {...register(`fieldArray.${index}.teamSize`)}
+          error={!!errors.fieldArray?.[index]?.teamSize}
+          helperText={
+            errors.fieldArray?.[index]?.teamSize?.message as ReactNode
+          }
+          disabled={!watch(`fieldArray.${index}.isEditing`)}
         />
         <Box>
           <Button
             variant="outlined"
-            disabled={!watch("isEditing")}
-            onClick={() => setValue("isEditing", false)}
+            disabled={!watch(`fieldArray.${index}.isEditing`)}
+            onClick={() => setValue(`fieldArray.${index}.isEditing`, false)}
           >
             Cancel
           </Button>
@@ -306,7 +354,7 @@ export function CareerForm({
             variant="contained"
             className="ml-2"
             onClick={handleSubmit(onSubmit)}
-            disabled={!watch("isEditing")}
+            disabled={!watch(`fieldArray.${index}.isEditing`)}
           >
             Save
           </Button>

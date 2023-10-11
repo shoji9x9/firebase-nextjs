@@ -1,30 +1,64 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { CareerForm } from "./CareerForm";
-import { Career } from "@/types/types";
+import {
+  Career,
+  CareerSchema,
+  CareerFieldArray,
+  CareerFieldArraySchema,
+} from "@/types/types";
 import { getCareers } from "@/services/getCareers";
 import { getLoginUserFromLocalStorage } from "@/services/auth";
 import { LoginUser } from "@/states/userAtom";
+import { AddButton } from "./AddButton";
+import { Box } from "@mui/material";
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export function CareerList({
   setDirty,
 }: {
   setDirty: (dirty: boolean) => void;
 }) {
-  const [careers, setCareers] = useState<Career[]>([]);
   const [loginUser, setLoginUser] = useState<LoginUser>();
   const [loading, setLoading] = useState(true);
 
-  // TODO: Addボタン追加後に削除
-  const defaultValue: Career = {
-    isEditing: false,
-    projectName: "",
-    isPresent: false,
-    startYearMonth: null,
-    endYearMonth: null,
-    techStack: [],
-    summary: "",
-    teamSize: 0,
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isDirty, dirtyFields },
+    control,
+    watch,
+    setValue,
+  } = useForm<CareerFieldArray>({
+    mode: "onSubmit",
+    reValidateMode: "onBlur",
+    resolver: zodResolver(CareerFieldArraySchema),
+  });
+  const { fields, append, remove, insert } = useFieldArray({
+    control,
+    name: "fieldArray",
+  });
+
+  // TODO: 追加、削除されたことがわかりづらいためアニメーションをつける
+  const addForm = (idx: number) => {
+    const defaultValue: Career = {
+      isEditing: false,
+      projectName: "",
+      isPresent: false,
+      startYearMonth: null,
+      endYearMonth: null,
+      techStack: [],
+      summary: "",
+      teamSize: null,
+    };
+    insert(idx, defaultValue);
   };
+
+  const deleteForm = (idx: number) => {
+    remove(idx);
+  };
+
+  // TODO: あるフォームを編集中は他のフォームを編集できなくする
 
   useEffect(() => {
     const _getCareers = async () => {
@@ -32,7 +66,9 @@ export function CareerList({
       setLoginUser(_loginUser);
       const _careers = await getCareers(_loginUser);
 
-      setCareers(_careers.map((career) => ({ ...career, isEditing: false })));
+      for (const _career of _careers) {
+        append({ ..._career, isEditing: false });
+      }
       setLoading(false);
     };
 
@@ -44,6 +80,27 @@ export function CareerList({
   }
 
   return (
-    <CareerForm career={careers[0] || defaultValue} loginUser={loginUser} />
+    <Box className="w-2/3">
+      <AddButton onClick={() => addForm(0)} />
+      {fields.map((field, index) => {
+        return (
+          <Fragment key={`${field.id}_${index}`}>
+            <CareerForm
+              career={field}
+              register={register}
+              handleSubmit={handleSubmit}
+              errors={errors}
+              control={control}
+              watch={watch}
+              setValue={setValue}
+              index={index}
+              loginUser={loginUser}
+              deleteForm={deleteForm}
+            />
+            <AddButton onClick={() => addForm(index + 1)} />
+          </Fragment>
+        );
+      })}
+    </Box>
   );
 }
