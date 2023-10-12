@@ -23,12 +23,10 @@ export function CareerList({
   const [loading, setLoading] = useState(true);
 
   const {
-    register,
-    handleSubmit,
-    formState: { errors, isDirty, dirtyFields },
+    // formState: { errors, isDirty, dirtyFields },
+    formState,
     control,
-    watch,
-    setValue,
+    ...rest
   } = useForm<CareerFieldArray>({
     mode: "onSubmit",
     reValidateMode: "onBlur",
@@ -59,6 +57,7 @@ export function CareerList({
   };
 
   // TODO: あるフォームを編集中は他のフォームを編集できなくする
+  // TODO: あるフォームを編集中はタブ切り替え時に確認ダイアログを表示する
 
   useEffect(() => {
     const _getCareers = async () => {
@@ -87,13 +86,14 @@ export function CareerList({
           <Fragment key={`${field.id}_${index}`}>
             <CareerForm
               career={field}
-              register={register}
-              handleSubmit={handleSubmit}
-              errors={errors}
-              control={control}
-              watch={watch}
-              setValue={setValue}
               index={index}
+              // errors={errors}
+              // control={control}
+              useFormReturn={{
+                formState: formState,
+                control: control,
+                ...rest,
+              }}
               loginUser={loginUser}
               deleteForm={deleteForm}
             />

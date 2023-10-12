@@ -27,45 +27,31 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { ReactNode, useEffect } from "react";
-import {
-  Control,
-  Controller,
-  FieldErrors,
-  SubmitHandler,
-  UseFormHandleSubmit,
-  UseFormRegister,
-  UseFormSetValue,
-  UseFormWatch,
-} from "react-hook-form";
+import { Controller, SubmitHandler, UseFormReturn } from "react-hook-form";
 import { useSetRecoilState } from "recoil";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { saveCareer } from "@/services/saveCareer";
 import { deleteCareer } from "@/services/deleteCareer";
 
-export function CareerForm({
-  career,
-  register,
-  handleSubmit,
-  errors,
-  control,
-  watch,
-  setValue,
-  index,
-  loginUser,
-  deleteForm,
-}: {
+type Props = {
   career: Career;
-  register: UseFormRegister<CareerFieldArray>;
-  handleSubmit: UseFormHandleSubmit<CareerFieldArray, undefined>;
-  errors: FieldErrors<CareerFieldArray>;
-  control: Control<CareerFieldArray, any>;
-  watch: UseFormWatch<CareerFieldArray>;
-  setValue: UseFormSetValue<CareerFieldArray>;
   index: number;
+  useFormReturn: UseFormReturn<CareerFieldArray>;
   loginUser?: LoginUser;
   deleteForm: (idx: number) => void;
-}) {
+};
+
+export function CareerForm(props: Props) {
+  const { career, index, useFormReturn, loginUser, deleteForm } = props;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    control,
+    watch,
+    setValue,
+  } = useFormReturn;
   const setMessageAtom = useSetRecoilState(messageAtom);
 
   console.log("CareerForm: ", career);
@@ -93,6 +79,7 @@ export function CareerForm({
 
   const onDelete: SubmitHandler<CareerFieldArray> = async (data) => {
     try {
+      // TODO: 削除前に確認ダイアログを表示する
       const _data = data.fieldArray[index];
       if (_data.id) {
         await deleteCareer(_data.id, loginUser);
@@ -161,6 +148,8 @@ export function CareerForm({
       setValue(`fieldArray.${index}.endYearMonth`, null);
     }
   }, [endYearMonthsWatch]);
+
+  // TODO: teamSizeを一度入力するとnullに戻せない（0になってしまう）不具合へ対応
 
   return (
     <Box>
