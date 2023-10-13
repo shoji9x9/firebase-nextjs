@@ -87,8 +87,6 @@ export function CareerList({
             <CareerForm
               career={field}
               index={index}
-              // errors={errors}
-              // control={control}
               useFormReturn={{
                 formState: formState,
                 control: control,
